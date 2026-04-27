@@ -131,7 +131,7 @@
             gameState.totalScore += points;
             gameState.completed[gameState.currentIdx] = true;
             if(gameState.currentIdx === gameState.unlocked) gameState.unlocked = gameState.currentIdx + 1;
-            document.getElementById('win-emoji').innerHTML = (gameState.currentIdx === 4) ? '👑🏆✨🌈' : '🌈🏆✨';
+            document.getElementById('win-emoji').innerHTML = (gameState.currentIdx === 4) ? '💯🏆✨' : '🎉🏆✨';
             document.getElementById('win-title').innerHTML = (gameState.currentIdx === 4) ? '★ FINAL BOSS DEFEATED! ★' : `${p.name} — MASTERED!`;
             document.getElementById('win-sub').innerHTML = msg || `+${points} pts`;
             document.getElementById('win-stats').innerHTML = `<div class="win-stat"><div style="font-size:32px; font-weight:800; color:#FF6B9D;">${points}</div><div>Points</div></div><div class="win-stat"><div style="font-size:26px;">${gameState.moves}</div><div>Moves</div></div><div class="win-stat"><div style="font-size:26px;">${elapsedSec}s</div><div>Used</div></div>`;
