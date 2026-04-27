@@ -12,7 +12,7 @@
     <div class="screen active" id="screen-menu">
         <div class="menu-hero">
             <h1>🎨 CHROMA·PLAY</h1>
-            <p>Four vivid puzzles • 120 seconds each</p>
+            <p>Five vivid puzzles • 120 seconds each</p>
         </div>
         <div class="score-bar">
             <span>🏆 RAINBOW SCORE</span>
@@ -25,7 +25,7 @@
     <!-- GAME SCREEN -->
     <div class="screen" id="screen-game">
         <div class="hud">
-            <div class="hud-stat"><div class="hud-label">🎯 PUZZLE</div><div class="hud-value" id="hud-puzzle">1/4</div></div>
+            <div class="hud-stat"><div class="hud-label">🎯 PUZZLE</div><div class="hud-value" id="hud-puzzle">1/5</div></div>
             <div class="hud-stat"><div class="hud-label">⭐ SCORE</div><div class="hud-value" id="hud-score">0</div></div>
             <div class="hud-stat"><div class="hud-label">⚡ MOVES</div><div class="hud-value" id="hud-moves">—</div></div>
             <div class="hud-stat"><div class="hud-label">⏱️ TIME</div><div class="hud-value" id="hud-time">02:00</div></div>
@@ -51,19 +51,20 @@
 </div>
 
 <script>
-    // GAME LIST: all have 120 seconds (2 minutes) 
+    // GAME LIST: all have 120 seconds (2 minutes) - NOW WITH 5 GAMES!
     const GAMES = [
         { id:0, name:"Lights Out", icon:"💡", diff:"Tactile", maxMoves:14, timeLimit:120, desc:"Tap cells to turn OFF all lights. Each toggles itself + neighbors." },
         { id:1, name:"Memory Match", icon:"🎴", diff:"Focus", maxMoves:24, timeLimit:120, desc:"Find all matching pairs. Flip two cards at a time." },
         { id:2, name:"Quick Math", icon:"🧮", diff:"Mental", maxMoves:12, timeLimit:120, desc:"Solve 8 equations. Pick the correct answer to advance." },
-        { id:3, name:"Slide Puzzle", icon:"🌀", diff:"Arrange", maxMoves:0, timeLimit:120, desc:"Order numbers 1 to 8. Tap tile next to empty space." }
+        { id:3, name:"Slide Puzzle", icon:"🌀", diff:"Arrange", maxMoves:0, timeLimit:120, desc:"Order numbers 1 to 8. Tap tile next to empty space." },
+        { id:4, name:"Color Code Breaker", icon:"🎨", diff:"Deduction", maxMoves:12, timeLimit:120, desc:"Crack the 4-color secret code! 🟥🟦🟩🟨 Each guess gives clues." }
     ];
 
     let gameState = {
         totalScore: 0,
         unlocked: 0,
-        scores: [0,0,0,0],
-        completed: [false,false,false,false],
+        scores: [0,0,0,0,0],
+        completed: [false,false,false,false,false],
         currentIdx: 0,
         moves: 0,
         startTimeMs: 0,
@@ -153,8 +154,11 @@
             gameState.totalScore += points;
             gameState.completed[gameState.currentIdx] = true;
             if (gameState.currentIdx === gameState.unlocked) gameState.unlocked = gameState.currentIdx + 1;
-            document.getElementById('win-emoji').innerHTML = '🌈🏆✨';
-            document.getElementById('win-title').innerHTML = `${p.name} — MASTERED!`;
+            
+            // Special message for final boss
+            const isFinal = (gameState.currentIdx === 4);
+            document.getElementById('win-emoji').innerHTML = isFinal ? '👑🏆✨🎨' : '🌈🏆✨';
+            document.getElementById('win-title').innerHTML = isFinal ? `★ FINAL BOSS DEFEATED! ★` : `${p.name} — MASTERED!`;
             document.getElementById('win-sub').innerHTML = msg || `Amazing! +${points} pts`;
             document.getElementById('win-stats').innerHTML = `
                 <div class="win-stat"><div style="font-size:32px; font-weight:800; color:#2EC4B6;">${points}</div><div>Points</div></div>
@@ -170,7 +174,7 @@
                 const nextBtn = document.createElement('button'); nextBtn.className = 'btn primary'; nextBtn.textContent = '➡️ Next Challenge'; nextBtn.onclick = () => startGame(nextIdx);
                 actionsDiv.appendChild(nextBtn);
             } else if (nextIdx >= GAMES.length) {
-                const finalBtn = document.createElement('button'); finalBtn.className = 'btn primary'; finalBtn.textContent = '🎉 Finish & Menu'; finalBtn.onclick = () => renderMenu();
+                const finalBtn = document.createElement('button'); finalBtn.className = 'btn primary'; finalBtn.textContent = '🎉 GRAND CHAMPION! 🎉'; finalBtn.onclick = () => renderMenu();
                 actionsDiv.appendChild(finalBtn);
             } else {
                 const cont = document.createElement('button'); cont.className = 'btn secondary'; cont.textContent = 'Continue'; cont.onclick = () => startGame(nextIdx);
@@ -208,7 +212,7 @@
         GAME_BUILDERS[index]();
     }
 
-    // ------------- GAME BUILDERS (Colored mechanics unchanged, but injected with style) -------------
+    // ------------- GAME 0: Lights Out -------------
     function buildLightsOut() {
         const SIZE = 4;
         let board = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
@@ -233,6 +237,8 @@
         }
         actionRow.innerHTML = ''; const shuffleBtn = document.createElement('button'); shuffleBtn.className = 'btn primary'; shuffleBtn.textContent = '🔄 Shuffle'; shuffleBtn.onclick = () => { randomizeBoard(); gameState.moves = 0; document.getElementById('hud-moves').innerHTML = GAMES[0].maxMoves; }; actionRow.appendChild(shuffleBtn); randomizeBoard();
     }
+    
+    // ------------- GAME 1: Memory Match -------------
     function buildMemoryMatch() {
         const emojis = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼']; let cards = [...emojis, ...emojis];
         for (let i = cards.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
@@ -248,6 +254,8 @@
             else { recordMove(); setTimeout(() => { flipped[firstIdx] = false; flipped[idx] = false; firstIdx = null; lock = false; renderBoard(); }, 700); } }
         actionRow.innerHTML = ''; const resetBtn = document.createElement('button'); resetBtn.className = 'btn primary'; resetBtn.textContent = '🃏 Reshuffle'; resetBtn.onclick = () => startGame(1); actionRow.appendChild(resetBtn); renderBoard();
     }
+    
+    // ------------- GAME 2: Quick Math -------------
     function buildQuickMath() {
         let totalCorrect = 0; const required = 8; let currentQuestion = null, currentAnswer = null;
         const area = document.getElementById('puzzle-area'), actionRow = document.getElementById('action-row');
@@ -257,6 +265,8 @@
             const optDiv = area.querySelector('#quiz-opts'); opts.forEach(opt => { const btn = document.createElement('div'); btn.className = 'quiz-opt'; btn.textContent = opt; btn.onclick = () => { if (opt === currentAnswer) { recordMove(); totalCorrect++; if (totalCorrect >= required) { showWinLose(true, "Math genius! 8/8 correct"); return; } showFeedback("Correct! Next →", "success"); generateNew(); } else { recordMove(); showFeedback("Wrong answer, try again", "error"); if (gameState.moves >= GAMES[2].maxMoves && totalCorrect < required) showWinLose(false, "Moves exhausted"); } }; optDiv.appendChild(btn); }); }
         actionRow.innerHTML = ''; totalCorrect = 0; generateNew();
     }
+    
+    // ------------- GAME 3: Slide Puzzle -------------
     function buildSlidePuzzle() {
         let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null]; function isSolvable(arr) { let flat = arr.filter(v => v !== null); let inv = 0; for(let i=0;i<flat.length;i++) for(let j=i+1;j<flat.length;j++) if(flat[i] > flat[j]) inv++; let blankRow = Math.floor(arr.indexOf(null)/3); return (inv % 2 === 0) === (blankRow % 2 === 1); }
         function shuffleValid() { do { tiles = [1,2,3,4,5,6,7,8,null]; for(let i=tiles.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[tiles[i],tiles[j]]=[tiles[j],tiles[i]];} } while(!isSolvable(tiles)); }
@@ -266,12 +276,294 @@
         function moveTile(idx) { const emptyIdx = tiles.indexOf(null); const rowE = Math.floor(emptyIdx/3), colE = emptyIdx%3, rowT = Math.floor(idx/3), colT = idx%3; if (Math.abs(rowE - rowT) + Math.abs(colE - colT) === 1) { [tiles[emptyIdx], tiles[idx]] = [tiles[idx], tiles[emptyIdx]]; recordMove(); renderSlide(); let win = true; for (let i = 0; i < 8; i++) if (tiles[i] !== i+1) win = false; if (win && tiles[8] === null) setTimeout(() => showWinLose(true, "Slide solved! Perfect order"), 150); } }
         actionRow.innerHTML = ''; const shuffleBtn = document.createElement('button'); shuffleBtn.className = 'btn primary'; shuffleBtn.textContent = '🔀 Shuffle Tiles'; shuffleBtn.onclick = () => { shuffleValid(); gameState.moves = 0; renderSlide(); document.getElementById('hud-moves').innerHTML = '∞'; }; actionRow.appendChild(shuffleBtn); renderSlide();
     }
-    const GAME_BUILDERS = [buildLightsOut, buildMemoryMatch, buildQuickMath, buildSlidePuzzle];
+    
+    // ------------- GAME 4: FINAL BOSS - Color Code Breaker (Mastermind) -------------
+    function buildColorCodeBreaker() {
+        const COLORS = ['🔴', '🔵', '🟢', '🟡', '🟠', '🟣'];
+        const COLOR_NAMES = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'ORANGE', 'PURPLE'];
+        const CODE_LENGTH = 4;
+        let secretCode = [];
+        let guesses = [];
+        let gameWon = false;
+        
+        const area = document.getElementById('puzzle-area');
+        const actionRow = document.getElementById('action-row');
+        
+        // Generate random secret code
+        function generateSecret() {
+            secretCode = [];
+            for (let i = 0; i < CODE_LENGTH; i++) {
+                secretCode.push(Math.floor(Math.random() * COLORS.length));
+            }
+        }
+        
+        // Evaluate a guess
+        function evaluateGuess(guess) {
+            let exact = 0;
+            let partial = 0;
+            let secretCopy = [...secretCode];
+            let guessCopy = [...guess];
+            
+            // Count exact matches
+            for (let i = 0; i < CODE_LENGTH; i++) {
+                if (guessCopy[i] === secretCopy[i]) {
+                    exact++;
+                    secretCopy[i] = null;
+                    guessCopy[i] = null;
+                }
+            }
+            
+            // Count partial matches (wrong position)
+            for (let i = 0; i < CODE_LENGTH; i++) {
+                if (guessCopy[i] !== null) {
+                    let index = secretCopy.indexOf(guessCopy[i]);
+                    if (index !== -1) {
+                        partial++;
+                        secretCopy[index] = null;
+                    }
+                }
+            }
+            
+            return { exact, partial };
+        }
+        
+        // Render the game interface
+        function renderGame() {
+            area.innerHTML = '';
+            const container = document.createElement('div');
+            container.style.width = '100%';
+            container.style.maxWidth = '500px';
+            container.style.margin = '0 auto';
+            
+            // Title
+            const title = document.createElement('div');
+            title.style.textAlign = 'center';
+            title.style.marginBottom = '20px';
+            title.style.fontWeight = '700';
+            title.style.fontSize = '14px';
+            title.style.color = '#9B5DE5';
+            title.innerHTML = '🎨 Crack the 4-color code! 🎨';
+            container.appendChild(title);
+            
+            // Guess history
+            const historyDiv = document.createElement('div');
+            historyDiv.style.marginBottom = '20px';
+            historyDiv.style.maxHeight = '300px';
+            historyDiv.style.overflowY = 'auto';
+            
+            for (let i = guesses.length - 1; i >= 0; i--) {
+                const guessRow = document.createElement('div');
+                guessRow.style.display = 'flex';
+                guessRow.style.alignItems = 'center';
+                guessRow.style.justifyContent = 'space-between';
+                guessRow.style.background = '#FFF2E6';
+                guessRow.style.margin = '8px 0';
+                guessRow.style.padding = '10px 15px';
+                guessRow.style.borderRadius = '20px';
+                guessRow.style.border = '1px solid #F9CC8F';
+                
+                const colorsDiv = document.createElement('div');
+                colorsDiv.style.display = 'flex';
+                colorsDiv.style.gap = '12px';
+                colorsDiv.style.fontSize = '28px';
+                for (let c of guesses[i].guess) {
+                    const colorSpan = document.createElement('span');
+                    colorSpan.textContent = COLORS[c];
+                    colorsDiv.appendChild(colorSpan);
+                }
+                
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.style.fontSize = '18px';
+                feedbackDiv.style.fontWeight = '700';
+                if (guesses[i].result.exact === CODE_LENGTH) {
+                    feedbackDiv.innerHTML = '🎉 PERFECT! 🎉';
+                    feedbackDiv.style.color = '#2EC4B6';
+                } else {
+                    feedbackDiv.innerHTML = `✅ ${guesses[i].result.exact} exact &nbsp;|&nbsp; 🔄 ${guesses[i].result.partial} partial`;
+                    feedbackDiv.style.color = '#E15554';
+                }
+                
+                guessRow.appendChild(colorsDiv);
+                guessRow.appendChild(feedbackDiv);
+                historyDiv.appendChild(guessRow);
+            }
+            
+            if (guesses.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.padding = '30px';
+                emptyMsg.style.color = '#C1AA8E';
+                emptyMsg.style.fontSize = '14px';
+                emptyMsg.textContent = '✨ Select 4 colors below to start guessing! ✨';
+                historyDiv.appendChild(emptyMsg);
+            }
+            
+            container.appendChild(historyDiv);
+            
+            // Color picker row
+            if (!gameWon && gameState.moves < GAMES[4].maxMoves) {
+                const pickerDiv = document.createElement('div');
+                pickerDiv.style.display = 'flex';
+                pickerDiv.style.gap = '10px';
+                pickerDiv.style.justifyContent = 'center';
+                pickerDiv.style.marginTop = '15px';
+                pickerDiv.style.flexWrap = 'wrap';
+                
+                COLORS.forEach((color, idx) => {
+                    const colorBtn = document.createElement('button');
+                    colorBtn.textContent = color;
+                    colorBtn.style.fontSize = '32px';
+                    colorBtn.style.padding = '12px';
+                    colorBtn.style.borderRadius = '60px';
+                    colorBtn.style.border = '2px solid #FDDFB5';
+                    colorBtn.style.background = 'white';
+                    colorBtn.style.cursor = 'pointer';
+                    colorBtn.style.width = '65px';
+                    colorBtn.style.transition = '0.1s';
+                    colorBtn.onmouseenter = () => colorBtn.style.transform = 'scale(1.05)';
+                    colorBtn.onmouseleave = () => colorBtn.style.transform = 'scale(1)';
+                    colorBtn.onclick = () => addColorToGuess(idx);
+                    pickerDiv.appendChild(colorBtn);
+                });
+                container.appendChild(pickerDiv);
+                
+                // Current guess display
+                const currentGuessDiv = document.createElement('div');
+                currentGuessDiv.id = 'current-guess-display';
+                currentGuessDiv.style.display = 'flex';
+                currentGuessDiv.style.justifyContent = 'center';
+                currentGuessDiv.style.gap = '15px';
+                currentGuessDiv.style.margin = '20px 0';
+                currentGuessDiv.style.padding = '15px';
+                currentGuessDiv.style.background = '#FFFAF0';
+                currentGuessDiv.style.borderRadius = '30px';
+                currentGuessDiv.style.border = '2px solid #FFDEB8';
+                container.appendChild(currentGuessDiv);
+            }
+            
+            area.appendChild(container);
+            updateCurrentGuessDisplay();
+        }
+        
+        let currentGuess = [];
+        
+        function addColorToGuess(colorIdx) {
+            if (gameWon) return;
+            if (currentGuess.length < CODE_LENGTH) {
+                currentGuess.push(colorIdx);
+                updateCurrentGuessDisplay();
+            } else {
+                showFeedback(`Select exactly ${CODE_LENGTH} colors!`, 'error');
+            }
+        }
+        
+        function updateCurrentGuessDisplay() {
+            const displayDiv = document.getElementById('current-guess-display');
+            if (displayDiv) {
+                displayDiv.innerHTML = '';
+                for (let i = 0; i < CODE_LENGTH; i++) {
+                    const slot = document.createElement('div');
+                    slot.style.width = '55px';
+                    slot.style.height = '55px';
+                    slot.style.borderRadius = '20px';
+                    slot.style.background = currentGuess[i] !== undefined ? COLORS[currentGuess[i]] : '#F0E6D8';
+                    slot.style.border = '2px solid #EADDBF';
+                    slot.style.display = 'flex';
+                    slot.style.alignItems = 'center';
+                    slot.style.justifyContent = 'center';
+                    slot.style.fontSize = '32px';
+                    if (currentGuess[i] !== undefined) {
+                        slot.textContent = COLORS[currentGuess[i]];
+                    } else {
+                        slot.textContent = '?';
+                        slot.style.color = '#C1AA8E';
+                        slot.style.fontSize = '24px';
+                    }
+                    slot.style.fontWeight = 'bold';
+                    displayDiv.appendChild(slot);
+                }
+                
+                // Add submit and clear buttons
+                const submitBtn = document.createElement('button');
+                submitBtn.textContent = '✓ SUBMIT GUESS';
+                submitBtn.className = 'btn primary';
+                submitBtn.style.marginLeft = '15px';
+                submitBtn.onclick = submitGuess;
+                
+                const clearBtn = document.createElement('button');
+                clearBtn.textContent = '✗ CLEAR';
+                clearBtn.className = 'btn';
+                clearBtn.onclick = () => { currentGuess = []; updateCurrentGuessDisplay(); };
+                
+                displayDiv.appendChild(submitBtn);
+                displayDiv.appendChild(clearBtn);
+            }
+        }
+        
+        function submitGuess() {
+            if (gameWon) return;
+            if (currentGuess.length !== CODE_LENGTH) {
+                showFeedback(`Need exactly ${CODE_LENGTH} colors!`, 'error');
+                return;
+            }
+            
+            const result = evaluateGuess(currentGuess);
+            guesses.push({ guess: [...currentGuess], result });
+            recordMove();
+            currentGuess = [];
+            
+            if (result.exact === CODE_LENGTH) {
+                gameWon = true;
+                const finalMsg = `🎨 CODE CRACKED! You broke the secret code! 🎨`;
+                setTimeout(() => showWinLose(true, finalMsg), 200);
+            } else {
+                showFeedback(`Exact: ${result.exact} | Partial: ${result.partial}`, 'info');
+            }
+            
+            renderGame();
+        }
+        
+        // Reset game
+        function resetGame() {
+            generateSecret();
+            guesses = [];
+            currentGuess = [];
+            gameWon = false;
+            gameState.moves = 0;
+            document.getElementById('hud-moves').innerHTML = GAMES[4].maxMoves;
+            renderGame();
+        }
+        
+        actionRow.innerHTML = '';
+        const resetBtn = document.createElement('button'); 
+        resetBtn.className = 'btn primary'; 
+        resetBtn.textContent = '🎲 New Secret Code'; 
+        resetBtn.onclick = resetGame;
+        actionRow.appendChild(resetBtn);
+        
+        generateSecret();
+        renderGame();
+    }
+    
+    const GAME_BUILDERS = [buildLightsOut, buildMemoryMatch, buildQuickMath, buildSlidePuzzle, buildColorCodeBreaker];
 
     function renderMenu() {
         document.getElementById('total-score-display').innerHTML = gameState.totalScore;
         const container = document.getElementById('puzzle-cards'); container.innerHTML = '';
-        GAMES.forEach((g, idx) => { const locked = idx > gameState.unlocked; const doneBadge = gameState.completed[idx] ? `  · ${gameState.scores[idx]}pts` : ''; const card = document.createElement('div'); card.className = `puzzle-card ${locked ? 'locked' : ''}`; card.setAttribute('data-idx', idx); card.innerHTML = `<div class="icon">${gameState.completed[idx] ? '✅' : locked ? '🔒' : g.icon}</div><div class="name">${g.name}</div><div class="diff">${g.diff}${doneBadge}</div>`; if (!locked) card.onclick = () => startGame(idx); container.appendChild(card); });
+        GAMES.forEach((g, idx) => { 
+            const locked = idx > gameState.unlocked; 
+            const doneBadge = gameState.completed[idx] ? `  · ${gameState.scores[idx]}pts` : ''; 
+            const card = document.createElement('div'); 
+            card.className = `puzzle-card ${locked ? 'locked' : ''}`; 
+            card.setAttribute('data-idx', idx); 
+            const isFinal = (idx === 4);
+            const bossIcon = isFinal ? '👑' : '';
+            card.innerHTML = `<div class="icon">${gameState.completed[idx] ? '✅' : locked ? '🔒' : g.icon}${bossIcon}</div>
+                              <div class="name">${g.name}${isFinal && !gameState.completed[idx] && !locked ? ' ★BOSS★' : ''}</div>
+                              <div class="diff">${g.diff}${doneBadge}</div>`; 
+            if (!locked) card.onclick = () => startGame(idx); 
+            container.appendChild(card); 
+        });
         showScreen('menu');
     }
     renderMenu();
