@@ -3,26 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🎨 Chroma Puzzles</title>
-    <link rel="stylesheet" href="style.css">
+    <title>🎨 Chroma Puzzles/title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #FFFDF9;
+            --bg-secondary: #F8F6F2;
+            --text-primary: #1F1F1D;
+            --text-secondary: #78746D;
+            --accent-gold: #E7B42C;
+            --accent-teal: #2D8F6E;
+            --accent-coral: #E06B4A;
+            --accent-indigo: #5B61AF;
+            --border-soft: #E9E5DD;
+            --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.03);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 18px;
+        }
+
+        body {
+            background: linear-gradient(145deg, #EBE7E0 0%, #E2DED5 100%);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        #game-root {
+            max-width: 680px;
+            width: 100%;
+            background: var(--bg-primary);
+            border-radius: 56px;
+            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255,255,245,0.5);
+            overflow: hidden;
+        }
+
+        .screen { display: none; animation: floatFade 0.35s ease-out; }
+        .screen.active { display: block; }
+        @keyframes floatFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Menu Styles */
+        .menu-hero { text-align: center; padding: 2.4rem 1.8rem 1.2rem; background: radial-gradient(ellipse at 70% 30%, rgba(231,180,44,0.08), transparent); }
+        .menu-hero h1 { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(125deg, #26231F, #9B8E7A); background-clip: text; -webkit-background-clip: text; color: transparent; margin-bottom: 10px; }
+        .score-bar { background: var(--bg-secondary); margin: 12px 22px 0; padding: 14px 22px; border-radius: 80px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; border: 1px solid var(--border-soft); }
+        #total-score-display { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #2D8F6E, #E7B42C); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .puzzle-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; margin: 28px 22px 22px; }
+        .puzzle-card { background: white; border: 1px solid var(--border-soft); border-radius: 32px; padding: 1.2rem 0.6rem; cursor: pointer; text-align: center; transition: all 0.25s ease; }
+        .puzzle-card:hover:not(.locked) { transform: translateY(-6px); border-color: #D6CFC1; box-shadow: 0 18px 28px -12px rgba(0, 0, 0, 0.15); }
+        .puzzle-card.locked { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.1); }
+        .puzzle-card .icon { font-size: 44px; margin-bottom: 10px; }
+        .puzzle-card .name { font-weight: 700; font-size: 17px; }
+        
+        /* HUD */
+        .hud { display: flex; justify-content: space-between; padding: 1.5rem 1.8rem 0.5rem; gap: 8px; flex-wrap: wrap; }
+        .hud-stat { background: var(--bg-secondary); padding: 8px 16px; border-radius: 60px; text-align: center; border: 0.5px solid var(--border-soft); flex: 1; min-width: 70px; }
+        .hud-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
+        .hud-value { font-size: 22px; font-weight: 700; }
+        .timer-warning { color: #E06B4A; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.65; } 100% { opacity: 1; } }
+        
+        .progress-bar { height: 6px; background: #E6E1D8; margin: 8px 22px 20px; border-radius: 12px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #2D8F6E, #E7B42C); width: 0%; border-radius: 12px; transition: width 0.4s; }
+        .puzzle-title { font-size: 26px; font-weight: 700; padding: 0 24px; }
+        .puzzle-desc { font-size: 14px; color: var(--text-secondary); margin: 6px 24px 20px; }
+        .puzzle-area { background: var(--bg-secondary); border-radius: 36px; border: 1px solid var(--border-soft); padding: 1.8rem 1.2rem; margin: 0 20px 20px; min-height: 280px; display: flex; align-items: center; justify-content: center; }
+        .feedback { font-size: 14px; font-weight: 500; padding: 12px 18px; border-radius: 60px; margin: 0 20px 18px; text-align: center; display: none; }
+        .feedback.success { background: #E1F3E8; color: #1C6E4A; border: 1px solid #B7DEBF; display: block; }
+        .feedback.error { background: #FCEBE6; color: #C25736; border: 1px solid #FAD1C4; display: block; }
+        .feedback.info { background: #EFF4FB; color: #2C6288; display: block; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; padding: 0 20px 28px; }
+        .btn { cursor: pointer; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: 1px solid var(--border-soft); background: white; transition: 0.12s linear; font-size: 14px; }
+        .btn:active { transform: scale(0.96); }
+        .btn.primary { background: #2D6E8F; color: white; border: none; background: linear-gradient(105deg, #2C6E9E, #22577A); }
+        .btn.hint-btn { background: linear-gradient(105deg, #E7B42C, #D49A1A); color: white; border: none; }
+        
+        /* Game specific */
+        .light-grid { display: grid; gap: 12px; justify-content: center; }
+        .light-cell { width: 62px; height: 62px; border-radius: 20px; background: #EFECE5; border: 1px solid #DDD9CF; cursor: pointer; }
+        .light-cell.on { background: #F7CD7C; border-color: #E0A42B; box-shadow: 0 0 0 2px #FFE6B3; }
+        .memory-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 380px; margin: 0 auto; }
+        .memory-card { aspect-ratio: 1; background: white; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 34px; cursor: pointer; border: 1px solid #DCD7CD; }
+        .memory-card.flipped, .memory-card.matched { background: #FEF3E0; border-color: #E7C286; }
+        .memory-card.matched { opacity: 0.7; background: #DEF0E2; }
+        .quiz-question { font-size: 52px; font-weight: 800; background: white; padding: 28px 10px; border-radius: 48px; margin-bottom: 28px; text-align: center; }
+        .quiz-options { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+        .quiz-opt { background: white; padding: 14px 28px; border-radius: 80px; font-weight: 700; font-size: 28px; cursor: pointer; border: 1px solid #DCD7CD; }
+        .slide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 300px; margin: 0 auto; }
+        .slide-tile { aspect-ratio: 1; background: white; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; cursor: pointer; border: 1px solid #D6D0C4; }
+        .slide-tile.empty { background: #E7E3DA; cursor: default; opacity: 0.6; }
+        .win-stat { background: var(--bg-secondary); border-radius: 32px; padding: 14px 24px; min-width: 100px; text-align: center; }
+        .win-stats { display: flex; gap: 18px; justify-content: center; margin: 28px 0; flex-wrap: wrap; }
+    </style>
 </head>
 <body>
 <div id="game-root">
-    <!-- MENU SCREEN -->
     <div class="screen active" id="screen-menu">
         <div class="menu-hero">
             <h1>🎨 CHROMA·PLAY</h1>
-            <p>Five vivid puzzles • 120 seconds each</p>
+            <p>Five vivid puzzles • 120 seconds each • 💡 Hints available (score penalty)</p>
         </div>
-        <div class="score-bar">
-            <span>🏆 RAINBOW SCORE</span>
-            <span id="total-score-display">0</span>
-        </div>
+        <div class="score-bar"><span>🏆 RAINBOW SCORE</span><span id="total-score-display">0</span></div>
         <div class="puzzle-cards" id="puzzle-cards"></div>
-        <p style="font-size:13px; text-align:center; margin-bottom:24px; color:#C1AA8E; font-weight:600;">✨ complete a puzzle → unlock next vibrant challenge</p>
+        <p style="font-size:13px; text-align:center; margin-bottom:24px; color:#C1AA8E;">✨ complete a puzzle → unlock next | 💡 Hint = -30 points</p>
     </div>
 
-    <!-- GAME SCREEN -->
     <div class="screen" id="screen-game">
         <div class="hud">
             <div class="hud-stat"><div class="hud-label">🎯 PUZZLE</div><div class="hud-value" id="hud-puzzle">1/5</div></div>
@@ -38,12 +130,11 @@
         <div class="btn-row" id="action-row"></div>
     </div>
 
-    <!-- VICTORY / FAILURE -->
     <div class="screen" id="screen-win">
-        <div class="win-screen">
-            <div class="win-emoji" id="win-emoji">🏅</div>
-            <div class="win-title" id="win-title" style="font-size:32px; font-weight:800; background: linear-gradient(135deg, #FF7E5F, #9B5DE5); background-clip:text; -webkit-background-clip:text; color:transparent;">Challenge Complete</div>
-            <div class="win-sub" id="win-sub" style="margin: 8px 0 0px; color:#C2A07A;"></div>
+        <div class="win-screen" style="text-align:center; padding:2.5rem 1.8rem;">
+            <div class="win-emoji" id="win-emoji" style="font-size:70px;">🏅</div>
+            <div class="win-title" id="win-title" style="font-size:32px; font-weight:800;">Challenge Complete</div>
+            <div class="win-sub" id="win-sub" style="margin:8px 0; color:#C2A07A;"></div>
             <div class="win-stats" id="win-stats"></div>
             <div class="btn-row" id="win-actions"></div>
         </div>
@@ -51,13 +142,13 @@
 </div>
 
 <script>
-    // GAME LIST: all have 120 seconds (2 minutes) - NOW WITH 5 GAMES!
+    // ---------- GAME LIST ----------
     const GAMES = [
-        { id:0, name:"Lights Out", icon:"💡", diff:"Tactile", maxMoves:14, timeLimit:120, desc:"Tap cells to turn OFF all lights. Each toggles itself + neighbors." },
-        { id:1, name:"Memory Match", icon:"🎴", diff:"Focus", maxMoves:24, timeLimit:120, desc:"Find all matching pairs. Flip two cards at a time." },
-        { id:2, name:"Quick Math", icon:"🧮", diff:"Mental", maxMoves:12, timeLimit:120, desc:"Solve 8 equations. Pick the correct answer to advance." },
-        { id:3, name:"Slide Puzzle", icon:"🌀", diff:"Arrange", maxMoves:0, timeLimit:120, desc:"Order numbers 1 to 8. Tap tile next to empty space." },
-        { id:4, name:"Color Code Breaker", icon:"🎨", diff:"Deduction", maxMoves:12, timeLimit:120, desc:"Crack the 4-color secret code! 🟥🟦🟩🟨 Each guess gives clues." }
+        { id:0, name:"Lights Out", icon:"💡", diff:"Tactile", maxMoves:14, timeLimit:120, desc:"Tap cells to turn OFF all lights." },
+        { id:1, name:"Memory Match", icon:"🎴", diff:"Focus", maxMoves:24, timeLimit:120, desc:"Find all matching pairs." },
+        { id:2, name:"Quick Math", icon:"🧮", diff:"Mental", maxMoves:12, timeLimit:120, desc:"Solve 8 equations." },
+        { id:3, name:"Slide Puzzle", icon:"🌀", diff:"Arrange", maxMoves:0, timeLimit:120, desc:"Order numbers 1 to 8." },
+        { id:4, name:"Color Code Breaker", icon:"🎨", diff:"Deduction", maxMoves:12, timeLimit:120, desc:"Crack the 4-color secret code!" }
     ];
 
     let gameState = {
@@ -70,7 +161,16 @@
         startTimeMs: 0,
         timerInterval: null,
         timeLeftSec: 120,
+        hintPenalty: 30  // points deducted per hint
     };
+
+    // Shared hint function — deducts score and shows feedback
+    function applyHintPenalty() {
+        gameState.totalScore = Math.max(0, gameState.totalScore - gameState.hintPenalty);
+        document.getElementById('hud-score').innerHTML = gameState.totalScore;
+        showFeedback(`💡 Hint used! -${gameState.hintPenalty} points`, 'info');
+        return true;
+    }
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -86,55 +186,30 @@
     }
 
     function stopTimer() { if (gameState.timerInterval) clearInterval(gameState.timerInterval); gameState.timerInterval = null; }
-
-    function formatTime(sec) {
-        let mins = Math.floor(sec / 60);
-        let remainSec = sec % 60;
-        return `${mins.toString().padStart(2,'0')}:${remainSec.toString().padStart(2,'0')}`;
-    }
-
-    function updateTimerUI() {
-        let el = document.getElementById('hud-time');
-        if (el) {
-            el.textContent = formatTime(gameState.timeLeftSec);
-            if (gameState.timeLeftSec <= 10) el.classList.add('timer-warning');
-            else el.classList.remove('timer-warning');
-        }
-    }
+    function formatTime(sec) { return `${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+    function updateTimerUI() { let el = document.getElementById('hud-time'); if(el) { el.textContent = formatTime(gameState.timeLeftSec); if(gameState.timeLeftSec <= 10) el.classList.add('timer-warning'); else el.classList.remove('timer-warning'); } }
 
     function startTimer(seconds) {
         stopTimer();
         gameState.timeLeftSec = seconds;
         updateTimerUI();
         gameState.timerInterval = setInterval(() => {
-            if (gameState.timeLeftSec <= 1) {
-                if (gameState.timeLeftSec <= 0) {
-                    stopTimer();
-                    onTimeout();
-                } else {
-                    gameState.timeLeftSec--;
-                    updateTimerUI();
-                    if (gameState.timeLeftSec === 0) onTimeout();
-                }
-            } else {
-                gameState.timeLeftSec--;
-                updateTimerUI();
-            }
+            if(gameState.timeLeftSec <= 1) {
+                if(gameState.timeLeftSec <= 0) { stopTimer(); onTimeout(); }
+                else { gameState.timeLeftSec--; updateTimerUI(); if(gameState.timeLeftSec === 0) onTimeout(); }
+            } else { gameState.timeLeftSec--; updateTimerUI(); }
         }, 1000);
     }
-
-    function onTimeout() { showWinLose(false, "⏰ Time's up — 2 minutes finished!"); }
+    function onTimeout() { showWinLose(false, "⏰ Time's up!"); }
 
     function recordMove() {
         gameState.moves++;
         const p = GAMES[gameState.currentIdx];
-        if (p.maxMoves) {
+        if(p.maxMoves) {
             let remaining = Math.max(0, p.maxMoves - gameState.moves);
             document.getElementById('hud-moves').innerHTML = remaining;
-            if (remaining === 0 && !gameState.completed[gameState.currentIdx]) showWinLose(false, "No moves remaining");
-        } else {
-            document.getElementById('hud-moves').innerHTML = '∞';
-        }
+            if(remaining === 0 && !gameState.completed[gameState.currentIdx]) showWinLose(false, "No moves remaining");
+        } else { document.getElementById('hud-moves').innerHTML = '∞'; }
     }
 
     function computeScore(remTimeSec, movesUsed, maxMovesLimit) {
@@ -148,46 +223,36 @@
         stopTimer();
         const p = GAMES[gameState.currentIdx];
         const elapsedSec = Math.round((Date.now() - gameState.startTimeMs) / 1000);
-        if (success) {
+        if(success) {
             let points = computeScore(gameState.timeLeftSec, gameState.moves, p.maxMoves);
             gameState.scores[gameState.currentIdx] = points;
             gameState.totalScore += points;
             gameState.completed[gameState.currentIdx] = true;
-            if (gameState.currentIdx === gameState.unlocked) gameState.unlocked = gameState.currentIdx + 1;
-            
-            // Special message for final boss
-            const isFinal = (gameState.currentIdx === 4);
-            document.getElementById('win-emoji').innerHTML = isFinal ? '👑🏆✨🎨' : '🌈🏆✨';
-            document.getElementById('win-title').innerHTML = isFinal ? `★ FINAL BOSS DEFEATED! ★` : `${p.name} — MASTERED!`;
-            document.getElementById('win-sub').innerHTML = msg || `Amazing! +${points} pts`;
-            document.getElementById('win-stats').innerHTML = `
-                <div class="win-stat"><div style="font-size:32px; font-weight:800; color:#2EC4B6;">${points}</div><div>Points</div></div>
-                <div class="win-stat"><div class="win-stat-v" style="font-size:26px; color:#F9A826;">${gameState.moves}</div><div>Moves</div></div>
-                <div class="win-stat"><div class="win-stat-v" style="font-size:26px; color:#9B5DE5;">${elapsedSec}s</div><div>Used</div></div>
-            `;
+            if(gameState.currentIdx === gameState.unlocked) gameState.unlocked = gameState.currentIdx + 1;
+            document.getElementById('win-emoji').innerHTML = (gameState.currentIdx === 4) ? '👑🏆✨🎨' : '🌈🏆✨';
+            document.getElementById('win-title').innerHTML = (gameState.currentIdx === 4) ? '★ FINAL BOSS DEFEATED! ★' : `${p.name} — MASTERED!`;
+            document.getElementById('win-sub').innerHTML = msg || `+${points} pts`;
+            document.getElementById('win-stats').innerHTML = `<div class="win-stat"><div style="font-size:32px; font-weight:800; color:#2EC4B6;">${points}</div><div>Points</div></div><div class="win-stat"><div style="font-size:26px;">${gameState.moves}</div><div>Moves</div></div><div class="win-stat"><div style="font-size:26px;">${elapsedSec}s</div><div>Used</div></div>`;
             const nextIdx = gameState.currentIdx + 1;
             const actionsDiv = document.getElementById('win-actions');
             actionsDiv.innerHTML = '';
-            const menuBtn = document.createElement('button'); menuBtn.className = 'btn'; menuBtn.textContent = '🏠 Main Menu'; menuBtn.onclick = () => renderMenu();
+            const menuBtn = document.createElement('button'); menuBtn.className = 'btn'; menuBtn.textContent = '🏠 Menu'; menuBtn.onclick = () => renderMenu();
             actionsDiv.appendChild(menuBtn);
-            if (nextIdx < GAMES.length && !gameState.completed[nextIdx]) {
+            if(nextIdx < GAMES.length && !gameState.completed[nextIdx]) {
                 const nextBtn = document.createElement('button'); nextBtn.className = 'btn primary'; nextBtn.textContent = '➡️ Next Challenge'; nextBtn.onclick = () => startGame(nextIdx);
                 actionsDiv.appendChild(nextBtn);
-            } else if (nextIdx >= GAMES.length) {
-                const finalBtn = document.createElement('button'); finalBtn.className = 'btn primary'; finalBtn.textContent = '🎉 GRAND CHAMPION! 🎉'; finalBtn.onclick = () => renderMenu();
+            } else if(nextIdx >= GAMES.length) {
+                const finalBtn = document.createElement('button'); finalBtn.className = 'btn primary'; finalBtn.textContent = '🎉 GRAND CHAMPION!'; finalBtn.onclick = () => renderMenu();
                 actionsDiv.appendChild(finalBtn);
-            } else {
-                const cont = document.createElement('button'); cont.className = 'btn secondary'; cont.textContent = 'Continue'; cont.onclick = () => startGame(nextIdx);
-                actionsDiv.appendChild(cont);
             }
         } else {
             document.getElementById('win-emoji').innerHTML = '⌛💔';
             document.getElementById('win-title').innerHTML = 'Time or Moves Exceeded';
-            document.getElementById('win-sub').innerHTML = msg || 'Give it another brilliant shot!';
-            document.getElementById('win-stats').innerHTML = `<div class="win-stat"><div class="win-stat-v" style="font-size:26px;">${gameState.moves}</div><div>moves used</div></div>`;
+            document.getElementById('win-sub').innerHTML = msg || 'Try again!';
+            document.getElementById('win-stats').innerHTML = `<div class="win-stat"><div style="font-size:26px;">${gameState.moves}</div><div>moves used</div></div>`;
             const acts = document.getElementById('win-actions');
             acts.innerHTML = '';
-            const retryBtn = document.createElement('button'); retryBtn.className = 'btn primary'; retryBtn.textContent = '🔄 Retry Puzzle'; retryBtn.onclick = () => startGame(gameState.currentIdx);
+            const retryBtn = document.createElement('button'); retryBtn.className = 'btn primary'; retryBtn.textContent = '🔄 Retry'; retryBtn.onclick = () => startGame(gameState.currentIdx);
             const menuBtn = document.createElement('button'); menuBtn.className = 'btn'; menuBtn.textContent = '📋 Menu'; menuBtn.onclick = () => renderMenu();
             acts.appendChild(retryBtn); acts.appendChild(menuBtn);
         }
@@ -212,7 +277,22 @@
         GAME_BUILDERS[index]();
     }
 
-    // ------------- GAME 0: Lights Out -------------
+    // ---------- HINT HELPER: add hint button to action row ----------
+    function addHintButton(hintCallback) {
+        const actionRow = document.getElementById('action-row');
+        const hintBtn = document.createElement('button');
+        hintBtn.className = 'btn hint-btn';
+        hintBtn.innerHTML = '💡 HINT (-30 pts)';
+        hintBtn.onclick = () => {
+            if(confirm('💡 Use a hint? This will deduct 30 points from your total score.')) {
+                applyHintPenalty();
+                hintCallback();
+            }
+        };
+        actionRow.appendChild(hintBtn);
+    }
+
+    // ========== GAME 0: LIGHTS OUT with HINT ==========
     function buildLightsOut() {
         const SIZE = 4;
         let board = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
@@ -220,331 +300,131 @@
         const actionRow = document.getElementById('action-row');
         function randomizeBoard() {
             board = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-            for (let i = 0; i < 12; i++) { let r = Math.floor(Math.random() * SIZE), c = Math.floor(Math.random() * SIZE); toggleCell(r, c, true); }
-            if (board.every(row => row.every(v => v === 0))) randomizeBoard();
+            for(let i=0;i<12;i++) { let r = Math.floor(Math.random()*SIZE), c = Math.floor(Math.random()*SIZE); toggleCell(r,c,true); }
+            if(board.every(row=>row.every(v=>v===0))) randomizeBoard();
             render();
         }
-        function toggleCell(r, c, silent = false) {
+        function toggleCell(r,c,silent=false) {
             const dirs = [[0,0],[0,1],[0,-1],[1,0],[-1,0]];
-            for (let [dr, dc] of dirs) { let nr = r + dr, nc = c + dc; if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) board[nr][nc] ^= 1; }
-            if (!silent) { recordMove(); render(); if (board.every(row => row.every(v => v === 0))) setTimeout(() => showWinLose(true, "Lights out! ✨"), 150); }
+            for(let [dr,dc] of dirs) { let nr=r+dr, nc=c+dc; if(nr>=0 && nr<SIZE && nc>=0 && nc<SIZE) board[nr][nc] ^= 1; }
+            if(!silent) { recordMove(); render(); if(board.every(row=>row.every(v=>v===0))) setTimeout(()=>showWinLose(true,"Lights out! ✨"),150); }
             else render();
         }
         function render() {
-            area.innerHTML = ''; const grid = document.createElement('div'); grid.className = 'light-grid'; grid.style.gridTemplateColumns = `repeat(${SIZE}, 62px)`;
-            for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE; j++) { const cell = document.createElement('div'); cell.className = `light-cell ${board[i][j] ? 'on' : ''}`; cell.onclick = () => toggleCell(i, j, false); grid.appendChild(cell); }
+            area.innerHTML = ''; const grid = document.createElement('div'); grid.className='light-grid'; grid.style.gridTemplateColumns=`repeat(${SIZE}, 62px)`;
+            for(let i=0;i<SIZE;i++) for(let j=0;j<SIZE;j++) { const cell=document.createElement('div'); cell.className=`light-cell ${board[i][j]?'on':''}`; cell.onclick=()=>toggleCell(i,j,false); grid.appendChild(cell); }
             area.appendChild(grid);
         }
-        actionRow.innerHTML = ''; const shuffleBtn = document.createElement('button'); shuffleBtn.className = 'btn primary'; shuffleBtn.textContent = '🔄 Shuffle'; shuffleBtn.onclick = () => { randomizeBoard(); gameState.moves = 0; document.getElementById('hud-moves').innerHTML = GAMES[0].maxMoves; }; actionRow.appendChild(shuffleBtn); randomizeBoard();
+        actionRow.innerHTML = '';
+        const shuffleBtn = document.createElement('button'); shuffleBtn.className='btn primary'; shuffleBtn.textContent='🔄 Shuffle'; shuffleBtn.onclick=()=>{ randomizeBoard(); gameState.moves=0; document.getElementById('hud-moves').innerHTML=GAMES[0].maxMoves; };
+        actionRow.appendChild(shuffleBtn);
+        // HINT: suggest a random ON cell to tap
+        addHintButton(() => {
+            let onCells = [];
+            for(let i=0;i<SIZE;i++) for(let j=0;j<SIZE;j++) if(board[i][j]===1) onCells.push([i,j]);
+            if(onCells.length===0) showFeedback("All lights already off! No hint needed.", "info");
+            else {
+                let [r,c] = onCells[Math.floor(Math.random()*onCells.length)];
+                showFeedback(`💡 Hint: Try tapping cell at row ${r+1}, col ${c+1} (it's ON)`, "info");
+            }
+        });
+        randomizeBoard();
     }
-    
-    // ------------- GAME 1: Memory Match -------------
+
+    // GAME 1: MEMORY MATCH HINT
     function buildMemoryMatch() {
         const emojis = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼']; let cards = [...emojis, ...emojis];
-        for (let i = cards.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
-        let flipped = Array(16).fill(false), matched = Array(16).fill(false), firstIdx = null, lock = false;
-        const area = document.getElementById('puzzle-area'), actionRow = document.getElementById('action-row');
-        function renderBoard() { area.innerHTML = ''; const boardDiv = document.createElement('div'); boardDiv.className = 'memory-board';
-            for (let i = 0; i < 16; i++) { const card = document.createElement('div'); card.className = 'memory-card';
-                if (flipped[i] || matched[i]) { card.classList.add('flipped'); card.textContent = cards[i]; if (matched[i]) card.classList.add('matched'); } else card.textContent = '?';
-                if (!matched[i]) card.onclick = () => { if (lock || matched[i] || flipped[i]) return; handleClick(i); }; boardDiv.appendChild(card); } area.appendChild(boardDiv); }
-        function handleClick(idx) { if (firstIdx === null) { flipped[idx] = true; firstIdx = idx; renderBoard(); return; }
-            if (firstIdx === idx) return; flipped[idx] = true; renderBoard(); lock = true;
-            if (cards[firstIdx] === cards[idx]) { matched[firstIdx] = true; matched[idx] = true; recordMove(); flipped[firstIdx] = false; flipped[idx] = false; firstIdx = null; lock = false; renderBoard(); if (matched.every(v => v === true)) setTimeout(() => showWinLose(true, "All pairs matched!"), 200); }
-            else { recordMove(); setTimeout(() => { flipped[firstIdx] = false; flipped[idx] = false; firstIdx = null; lock = false; renderBoard(); }, 700); } }
-        actionRow.innerHTML = ''; const resetBtn = document.createElement('button'); resetBtn.className = 'btn primary'; resetBtn.textContent = '🃏 Reshuffle'; resetBtn.onclick = () => startGame(1); actionRow.appendChild(resetBtn); renderBoard();
+        for(let i=cards.length-1;i>0;i--) { let j=Math.floor(Math.random()*(i+1)); [cards[i],cards[j]]=[cards[j],cards[i]]; }
+        let flipped=Array(16).fill(false), matched=Array(16).fill(false), firstIdx=null, lock=false;
+        const area=document.getElementById('puzzle-area'), actionRow=document.getElementById('action-row');
+        function renderBoard() { area.innerHTML=''; const boardDiv=document.createElement('div'); boardDiv.className='memory-board';
+            for(let i=0;i<16;i++) { const card=document.createElement('div'); card.className='memory-card';
+                if(flipped[i]||matched[i]) { card.classList.add('flipped'); card.textContent=cards[i]; if(matched[i]) card.classList.add('matched'); } else card.textContent='?';
+                if(!matched[i]) card.onclick=()=>{ if(lock||matched[i]||flipped[i]) return; handleClick(i); }; boardDiv.appendChild(card); } area.appendChild(boardDiv); }
+        function handleClick(idx) { if(firstIdx===null) { flipped[idx]=true; firstIdx=idx; renderBoard(); return; }
+            if(firstIdx===idx) return; flipped[idx]=true; renderBoard(); lock=true;
+            if(cards[firstIdx]===cards[idx]) { matched[firstIdx]=true; matched[idx]=true; recordMove(); flipped[firstIdx]=false; flipped[idx]=false; firstIdx=null; lock=false; renderBoard(); if(matched.every(v=>v===true)) setTimeout(()=>showWinLose(true,"All pairs matched!"),200); }
+            else { recordMove(); setTimeout(()=>{ flipped[firstIdx]=false; flipped[idx]=false; firstIdx=null; lock=false; renderBoard(); },700); } }
+        actionRow.innerHTML=''; const resetBtn=document.createElement('button'); resetBtn.className='btn primary'; resetBtn.textContent='🃏 Reshuffle'; resetBtn.onclick=()=>startGame(1); actionRow.appendChild(resetBtn);
+        addHintButton(() => {
+            let unmatched = [];
+            for(let i=0;i<16;i++) if(!matched[i] && !flipped[i]) unmatched.push(i);
+            if(unmatched.length<2) showFeedback("Almost done! Just match the remaining cards.", "info");
+            else {
+                let idx1 = unmatched[Math.floor(Math.random()*unmatched.length)];
+                let matchIdx = -1;
+                for(let i=0;i<16;i++) if(i!==idx1 && cards[i]===cards[idx1] && !matched[i] && !flipped[i]) { matchIdx=i; break; }
+                if(matchIdx!==-1) showFeedback(`💡 Hint: Card "${cards[idx1]}" at position ${Math.floor(idx1/4)+1}-${(idx1%4)+1} matches with position ${Math.floor(matchIdx/4)+1}-${(matchIdx%4)+1}`, "info");
+                else showFeedback("💡 Hint: Try flipping any unmatched card to start a pair", "info");
+            }
+        });
+        renderBoard();
     }
-    
-    // ------------- GAME 2: Quick Math -------------
+
+    // GAME 2: QUICK MATH HINT (shows correct answer if stuck)
     function buildQuickMath() {
-        let totalCorrect = 0; const required = 8; let currentQuestion = null, currentAnswer = null;
-        const area = document.getElementById('puzzle-area'), actionRow = document.getElementById('action-row');
-        function generateNew() { let a = Math.floor(Math.random() * 12) + 1, b = Math.floor(Math.random() * 12) + 1, answer = a + b; let fake1 = answer + Math.floor(Math.random() * 5) + 1, fake2 = Math.max(1, answer - Math.floor(Math.random() * 5) - 1);
-            while (fake1 === answer) fake1++; while (fake2 === answer) fake2--; let opts = [answer, fake1, fake2]; for (let i = opts.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; } currentQuestion = `${a} + ${b}`; currentAnswer = answer; renderQuiz(opts); }
-        function renderQuiz(opts) { area.innerHTML = `<div class="quiz-card"><div class="quiz-question">${currentQuestion} = ?</div><div class="quiz-options" id="quiz-opts"></div><div style="margin-top:20px; font-weight:700;">✔️ ${totalCorrect} / ${required} correct</div></div>`;
-            const optDiv = area.querySelector('#quiz-opts'); opts.forEach(opt => { const btn = document.createElement('div'); btn.className = 'quiz-opt'; btn.textContent = opt; btn.onclick = () => { if (opt === currentAnswer) { recordMove(); totalCorrect++; if (totalCorrect >= required) { showWinLose(true, "Math genius! 8/8 correct"); return; } showFeedback("Correct! Next →", "success"); generateNew(); } else { recordMove(); showFeedback("Wrong answer, try again", "error"); if (gameState.moves >= GAMES[2].maxMoves && totalCorrect < required) showWinLose(false, "Moves exhausted"); } }; optDiv.appendChild(btn); }); }
-        actionRow.innerHTML = ''; totalCorrect = 0; generateNew();
+        let totalCorrect=0; const required=8; let currentQuestion=null, currentAnswer=null;
+        const area=document.getElementById('puzzle-area'), actionRow=document.getElementById('action-row');
+        function generateNew() { let a=Math.floor(Math.random()*12)+1, b=Math.floor(Math.random()*12)+1, answer=a+b; let fake1=answer+Math.floor(Math.random()*5)+1, fake2=Math.max(1,answer-Math.floor(Math.random()*5)-1);
+            while(fake1===answer) fake1++; while(fake2===answer) fake2--; let opts=[answer,fake1,fake2]; for(let i=opts.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];} currentQuestion=`${a} + ${b}`; currentAnswer=answer; renderQuiz(opts); }
+        function renderQuiz(opts) { area.innerHTML=`<div class="quiz-card"><div class="quiz-question">${currentQuestion} = ?</div><div class="quiz-options" id="quiz-opts"></div><div style="margin-top:20px; font-weight:700;">✔️ ${totalCorrect} / ${required} correct</div></div>`;
+            const optDiv=area.querySelector('#quiz-opts'); opts.forEach(opt=>{ const btn=document.createElement('div'); btn.className='quiz-opt'; btn.textContent=opt; btn.onclick=()=>{ if(opt===currentAnswer){ recordMove(); totalCorrect++; if(totalCorrect>=required){ showWinLose(true,"Math genius!"); return; } showFeedback("Correct! Next →","success"); generateNew(); } else { recordMove(); showFeedback("Wrong answer","error"); if(gameState.moves>=GAMES[2].maxMoves && totalCorrect<required) showWinLose(false,"Moves exhausted"); } }; optDiv.appendChild(btn); }); }
+        actionRow.innerHTML=''; totalCorrect=0; generateNew();
+        addHintButton(() => { if(currentAnswer !== null) showFeedback(`💡 Hint: The correct answer is ${currentAnswer}`, "info"); else showFeedback("💡 Hint: Solve the equation by adding the two numbers", "info"); });
     }
-    
-    // ------------- GAME 3: Slide Puzzle -------------
+
+    // GAME 3: SLIDE PUZZLE HINT
     function buildSlidePuzzle() {
-        let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null]; function isSolvable(arr) { let flat = arr.filter(v => v !== null); let inv = 0; for(let i=0;i<flat.length;i++) for(let j=i+1;j<flat.length;j++) if(flat[i] > flat[j]) inv++; let blankRow = Math.floor(arr.indexOf(null)/3); return (inv % 2 === 0) === (blankRow % 2 === 1); }
-        function shuffleValid() { do { tiles = [1,2,3,4,5,6,7,8,null]; for(let i=tiles.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[tiles[i],tiles[j]]=[tiles[j],tiles[i]];} } while(!isSolvable(tiles)); }
-        shuffleValid(); const area = document.getElementById('puzzle-area'), actionRow = document.getElementById('action-row');
-        function renderSlide() { area.innerHTML = ''; const grid = document.createElement('div'); grid.className = 'slide-grid';
-            for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const val = tiles[i*3+j]; const tile = document.createElement('div'); tile.className = 'slide-tile'; if (val === null) { tile.textContent = ''; tile.classList.add('empty'); } else tile.textContent = val; tile.onclick = () => moveTile(i*3+j); grid.appendChild(tile); } area.appendChild(grid); }
-        function moveTile(idx) { const emptyIdx = tiles.indexOf(null); const rowE = Math.floor(emptyIdx/3), colE = emptyIdx%3, rowT = Math.floor(idx/3), colT = idx%3; if (Math.abs(rowE - rowT) + Math.abs(colE - colT) === 1) { [tiles[emptyIdx], tiles[idx]] = [tiles[idx], tiles[emptyIdx]]; recordMove(); renderSlide(); let win = true; for (let i = 0; i < 8; i++) if (tiles[i] !== i+1) win = false; if (win && tiles[8] === null) setTimeout(() => showWinLose(true, "Slide solved! Perfect order"), 150); } }
-        actionRow.innerHTML = ''; const shuffleBtn = document.createElement('button'); shuffleBtn.className = 'btn primary'; shuffleBtn.textContent = '🔀 Shuffle Tiles'; shuffleBtn.onclick = () => { shuffleValid(); gameState.moves = 0; renderSlide(); document.getElementById('hud-moves').innerHTML = '∞'; }; actionRow.appendChild(shuffleBtn); renderSlide();
+        let tiles = [1,2,3,4,5,6,7,8,null];
+        function isSolvable(arr) { let flat=arr.filter(v=>v!==null); let inv=0; for(let i=0;i<flat.length;i++) for(let j=i+1;j<flat.length;j++) if(flat[i]>flat[j]) inv++; let blankRow=Math.floor(arr.indexOf(null)/3); return (inv%2===0)===(blankRow%2===1); }
+        function shuffleValid() { do { tiles=[1,2,3,4,5,6,7,8,null]; for(let i=tiles.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[tiles[i],tiles[j]]=[tiles[j],tiles[i]];} } while(!isSolvable(tiles)); }
+        shuffleValid(); const area=document.getElementById('puzzle-area'), actionRow=document.getElementById('action-row');
+        function renderSlide() { area.innerHTML=''; const grid=document.createElement('div'); grid.className='slide-grid';
+            for(let i=0;i<3;i++) for(let j=0;j<3;j++) { const val=tiles[i*3+j]; const tile=document.createElement('div'); tile.className='slide-tile'; if(val===null) { tile.textContent=''; tile.classList.add('empty'); } else tile.textContent=val; tile.onclick=()=>moveTile(i*3+j); grid.appendChild(tile); } area.appendChild(grid); }
+        function moveTile(idx) { const emptyIdx=tiles.indexOf(null); const rowE=Math.floor(emptyIdx/3),colE=emptyIdx%3,rowT=Math.floor(idx/3),colT=idx%3; if(Math.abs(rowE-rowT)+Math.abs(colE-colT)===1){ [tiles[emptyIdx],tiles[idx]]=[tiles[idx],tiles[emptyIdx]]; recordMove(); renderSlide(); let win=true; for(let i=0;i<8;i++) if(tiles[i]!==i+1) win=false; if(win && tiles[8]===null) setTimeout(()=>showWinLose(true,"Slide solved!"),150); } }
+        actionRow.innerHTML=''; const shuffleBtn=document.createElement('button'); shuffleBtn.className='btn primary'; shuffleBtn.textContent='🔀 Shuffle'; shuffleBtn.onclick=()=>{ shuffleValid(); gameState.moves=0; renderSlide(); document.getElementById('hud-moves').innerHTML='∞'; }; actionRow.appendChild(shuffleBtn);
+        addHintButton(() => { const emptyIdx=tiles.indexOf(null); const correctOrder=[1,2,3,4,5,6,7,8,null]; let misplaced=[]; for(let i=0;i<9;i++) if(tiles[i]!==correctOrder[i] && tiles[i]!==null) misplaced.push(i); if(misplaced.length>0){ let targetIdx=misplaced[0]; let correctVal=correctOrder[targetIdx]; showFeedback(`💡 Hint: The tile ${correctVal} should be at position ${Math.floor(targetIdx/3)+1}-${(targetIdx%3)+1}. Slide tiles toward the empty space.`,"info"); } else showFeedback("💡 Hint: Keep sliding until all numbers are in order 1-8", "info"); });
+        renderSlide();
     }
-    
-    // ------------- GAME 4: FINAL BOSS - Color Code Breaker (Mastermind) -------------
+
+    // GAME 4: COLOR CODE BREAKER HINT
     function buildColorCodeBreaker() {
-        const COLORS = ['🔴', '🔵', '🟢', '🟡', '🟠', '🟣'];
-        const COLOR_NAMES = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'ORANGE', 'PURPLE'];
-        const CODE_LENGTH = 4;
-        let secretCode = [];
-        let guesses = [];
-        let gameWon = false;
-        
-        const area = document.getElementById('puzzle-area');
-        const actionRow = document.getElementById('action-row');
-        
-        // Generate random secret code
-        function generateSecret() {
-            secretCode = [];
-            for (let i = 0; i < CODE_LENGTH; i++) {
-                secretCode.push(Math.floor(Math.random() * COLORS.length));
-            }
-        }
-        
-        // Evaluate a guess
-        function evaluateGuess(guess) {
-            let exact = 0;
-            let partial = 0;
-            let secretCopy = [...secretCode];
-            let guessCopy = [...guess];
-            
-            // Count exact matches
-            for (let i = 0; i < CODE_LENGTH; i++) {
-                if (guessCopy[i] === secretCopy[i]) {
-                    exact++;
-                    secretCopy[i] = null;
-                    guessCopy[i] = null;
-                }
-            }
-            
-            // Count partial matches (wrong position)
-            for (let i = 0; i < CODE_LENGTH; i++) {
-                if (guessCopy[i] !== null) {
-                    let index = secretCopy.indexOf(guessCopy[i]);
-                    if (index !== -1) {
-                        partial++;
-                        secretCopy[index] = null;
-                    }
-                }
-            }
-            
-            return { exact, partial };
-        }
-        
-        // Render the game interface
-        function renderGame() {
-            area.innerHTML = '';
-            const container = document.createElement('div');
-            container.style.width = '100%';
-            container.style.maxWidth = '500px';
-            container.style.margin = '0 auto';
-            
-            // Title
-            const title = document.createElement('div');
-            title.style.textAlign = 'center';
-            title.style.marginBottom = '20px';
-            title.style.fontWeight = '700';
-            title.style.fontSize = '14px';
-            title.style.color = '#9B5DE5';
-            title.innerHTML = '🎨 Crack the 4-color code! 🎨';
-            container.appendChild(title);
-            
-            // Guess history
-            const historyDiv = document.createElement('div');
-            historyDiv.style.marginBottom = '20px';
-            historyDiv.style.maxHeight = '300px';
-            historyDiv.style.overflowY = 'auto';
-            
-            for (let i = guesses.length - 1; i >= 0; i--) {
-                const guessRow = document.createElement('div');
-                guessRow.style.display = 'flex';
-                guessRow.style.alignItems = 'center';
-                guessRow.style.justifyContent = 'space-between';
-                guessRow.style.background = '#FFF2E6';
-                guessRow.style.margin = '8px 0';
-                guessRow.style.padding = '10px 15px';
-                guessRow.style.borderRadius = '20px';
-                guessRow.style.border = '1px solid #F9CC8F';
-                
-                const colorsDiv = document.createElement('div');
-                colorsDiv.style.display = 'flex';
-                colorsDiv.style.gap = '12px';
-                colorsDiv.style.fontSize = '28px';
-                for (let c of guesses[i].guess) {
-                    const colorSpan = document.createElement('span');
-                    colorSpan.textContent = COLORS[c];
-                    colorsDiv.appendChild(colorSpan);
-                }
-                
-                const feedbackDiv = document.createElement('div');
-                feedbackDiv.style.fontSize = '18px';
-                feedbackDiv.style.fontWeight = '700';
-                if (guesses[i].result.exact === CODE_LENGTH) {
-                    feedbackDiv.innerHTML = '🎉 PERFECT! 🎉';
-                    feedbackDiv.style.color = '#2EC4B6';
-                } else {
-                    feedbackDiv.innerHTML = `✅ ${guesses[i].result.exact} exact &nbsp;|&nbsp; 🔄 ${guesses[i].result.partial} partial`;
-                    feedbackDiv.style.color = '#E15554';
-                }
-                
-                guessRow.appendChild(colorsDiv);
-                guessRow.appendChild(feedbackDiv);
-                historyDiv.appendChild(guessRow);
-            }
-            
-            if (guesses.length === 0) {
-                const emptyMsg = document.createElement('div');
-                emptyMsg.style.textAlign = 'center';
-                emptyMsg.style.padding = '30px';
-                emptyMsg.style.color = '#C1AA8E';
-                emptyMsg.style.fontSize = '14px';
-                emptyMsg.textContent = '✨ Select 4 colors below to start guessing! ✨';
-                historyDiv.appendChild(emptyMsg);
-            }
-            
+        const COLORS = ['🔴','🔵','🟢','🟡','🟠','🟣']; const CODE_LENGTH=4;
+        let secretCode=[], guesses=[], gameWon=false, currentGuess=[];
+        const area=document.getElementById('puzzle-area'), actionRow=document.getElementById('action-row');
+        function generateSecret() { secretCode=[]; for(let i=0;i<CODE_LENGTH;i++) secretCode.push(Math.floor(Math.random()*COLORS.length)); }
+        function evaluateGuess(guess){ let exact=0,partial=0, secretCopy=[...secretCode], guessCopy=[...guess];
+            for(let i=0;i<CODE_LENGTH;i++) if(guessCopy[i]===secretCopy[i]){ exact++; secretCopy[i]=null; guessCopy[i]=null; }
+            for(let i=0;i<CODE_LENGTH;i++) if(guessCopy[i]!==null){ let idx=secretCopy.indexOf(guessCopy[i]); if(idx!==-1){ partial++; secretCopy[idx]=null; } }
+            return {exact,partial}; }
+        function renderGame(){ area.innerHTML=''; const container=document.createElement('div'); container.style.width='100%'; container.style.maxWidth='500px'; container.style.margin='0 auto';
+            const title=document.createElement('div'); title.style.textAlign='center'; title.style.marginBottom='20px'; title.style.fontWeight='700'; title.innerHTML='🎨 Crack the 4-color code!'; container.appendChild(title);
+            const historyDiv=document.createElement('div'); historyDiv.style.marginBottom='20px'; historyDiv.style.maxHeight='300px'; historyDiv.style.overflowY='auto';
+            for(let i=guesses.length-1;i>=0;i--){ const row=document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.justifyContent='space-between'; row.style.background='#FFF2E6'; row.style.margin='8px 0'; row.style.padding='10px 15px'; row.style.borderRadius='20px';
+                const colorsDiv=document.createElement('div'); colorsDiv.style.display='flex'; colorsDiv.style.gap='12px'; colorsDiv.style.fontSize='28px'; for(let c of guesses[i].guess) colorsDiv.appendChild(document.createTextNode(COLORS[c]));
+                const feedbackDiv=document.createElement('div'); feedbackDiv.style.fontSize='18px'; feedbackDiv.style.fontWeight='700'; if(guesses[i].result.exact===CODE_LENGTH) feedbackDiv.innerHTML='🎉 PERFECT!'; else feedbackDiv.innerHTML=`✅ ${guesses[i].result.exact} exact | 🔄 ${guesses[i].result.partial} partial`;
+                row.appendChild(colorsDiv); row.appendChild(feedbackDiv); historyDiv.appendChild(row); }
+            if(guesses.length===0){ const emptyMsg=document.createElement('div'); emptyMsg.style.textAlign='center'; emptyMsg.style.padding='30px'; emptyMsg.textContent='✨ Select 4 colors below!'; historyDiv.appendChild(emptyMsg); }
             container.appendChild(historyDiv);
-            
-            // Color picker row
-            if (!gameWon && gameState.moves < GAMES[4].maxMoves) {
-                const pickerDiv = document.createElement('div');
-                pickerDiv.style.display = 'flex';
-                pickerDiv.style.gap = '10px';
-                pickerDiv.style.justifyContent = 'center';
-                pickerDiv.style.marginTop = '15px';
-                pickerDiv.style.flexWrap = 'wrap';
-                
-                COLORS.forEach((color, idx) => {
-                    const colorBtn = document.createElement('button');
-                    colorBtn.textContent = color;
-                    colorBtn.style.fontSize = '32px';
-                    colorBtn.style.padding = '12px';
-                    colorBtn.style.borderRadius = '60px';
-                    colorBtn.style.border = '2px solid #FDDFB5';
-                    colorBtn.style.background = 'white';
-                    colorBtn.style.cursor = 'pointer';
-                    colorBtn.style.width = '65px';
-                    colorBtn.style.transition = '0.1s';
-                    colorBtn.onmouseenter = () => colorBtn.style.transform = 'scale(1.05)';
-                    colorBtn.onmouseleave = () => colorBtn.style.transform = 'scale(1)';
-                    colorBtn.onclick = () => addColorToGuess(idx);
-                    pickerDiv.appendChild(colorBtn);
-                });
+            if(!gameWon && gameState.moves<GAMES[4].maxMoves){ const pickerDiv=document.createElement('div'); pickerDiv.style.display='flex'; pickerDiv.style.gap='10px'; pickerDiv.style.justifyContent='center'; pickerDiv.style.marginTop='15px'; pickerDiv.style.flexWrap='wrap';
+                COLORS.forEach((color,idx)=>{ const btn=document.createElement('button'); btn.textContent=color; btn.style.fontSize='32px'; btn.style.padding='12px'; btn.style.borderRadius='60px'; btn.style.border='2px solid #FDDFB5'; btn.style.background='white'; btn.style.cursor='pointer'; btn.style.width='65px'; btn.onclick=()=>{ if(currentGuess.length<CODE_LENGTH) currentGuess.push(idx); else showFeedback(`Select exactly ${CODE_LENGTH} colors!`,'error'); updateDisplay(); }; pickerDiv.appendChild(btn); });
                 container.appendChild(pickerDiv);
-                
-                // Current guess display
-                const currentGuessDiv = document.createElement('div');
-                currentGuessDiv.id = 'current-guess-display';
-                currentGuessDiv.style.display = 'flex';
-                currentGuessDiv.style.justifyContent = 'center';
-                currentGuessDiv.style.gap = '15px';
-                currentGuessDiv.style.margin = '20px 0';
-                currentGuessDiv.style.padding = '15px';
-                currentGuessDiv.style.background = '#FFFAF0';
-                currentGuessDiv.style.borderRadius = '30px';
-                currentGuessDiv.style.border = '2px solid #FFDEB8';
-                container.appendChild(currentGuessDiv);
+                const displayDiv=document.createElement('div'); displayDiv.id='current-guess-display'; displayDiv.style.display='flex'; displayDiv.style.justifyContent='center'; displayDiv.style.gap='15px'; displayDiv.style.margin='20px 0'; displayDiv.style.padding='15px'; displayDiv.style.background='#FFFAF0'; displayDiv.style.borderRadius='30px'; container.appendChild(displayDiv);
             }
-            
-            area.appendChild(container);
-            updateCurrentGuessDisplay();
-        }
-        
-        let currentGuess = [];
-        
-        function addColorToGuess(colorIdx) {
-            if (gameWon) return;
-            if (currentGuess.length < CODE_LENGTH) {
-                currentGuess.push(colorIdx);
-                updateCurrentGuessDisplay();
-            } else {
-                showFeedback(`Select exactly ${CODE_LENGTH} colors!`, 'error');
-            }
-        }
-        
-        function updateCurrentGuessDisplay() {
-            const displayDiv = document.getElementById('current-guess-display');
-            if (displayDiv) {
-                displayDiv.innerHTML = '';
-                for (let i = 0; i < CODE_LENGTH; i++) {
-                    const slot = document.createElement('div');
-                    slot.style.width = '55px';
-                    slot.style.height = '55px';
-                    slot.style.borderRadius = '20px';
-                    slot.style.background = currentGuess[i] !== undefined ? COLORS[currentGuess[i]] : '#F0E6D8';
-                    slot.style.border = '2px solid #EADDBF';
-                    slot.style.display = 'flex';
-                    slot.style.alignItems = 'center';
-                    slot.style.justifyContent = 'center';
-                    slot.style.fontSize = '32px';
-                    if (currentGuess[i] !== undefined) {
-                        slot.textContent = COLORS[currentGuess[i]];
-                    } else {
-                        slot.textContent = '?';
-                        slot.style.color = '#C1AA8E';
-                        slot.style.fontSize = '24px';
-                    }
-                    slot.style.fontWeight = 'bold';
-                    displayDiv.appendChild(slot);
-                }
-                
-                // Add submit and clear buttons
-                const submitBtn = document.createElement('button');
-                submitBtn.textContent = '✓ SUBMIT GUESS';
-                submitBtn.className = 'btn primary';
-                submitBtn.style.marginLeft = '15px';
-                submitBtn.onclick = submitGuess;
-                
-                const clearBtn = document.createElement('button');
-                clearBtn.textContent = '✗ CLEAR';
-                clearBtn.className = 'btn';
-                clearBtn.onclick = () => { currentGuess = []; updateCurrentGuessDisplay(); };
-                
-                displayDiv.appendChild(submitBtn);
-                displayDiv.appendChild(clearBtn);
-            }
-        }
-        
-        function submitGuess() {
-            if (gameWon) return;
-            if (currentGuess.length !== CODE_LENGTH) {
-                showFeedback(`Need exactly ${CODE_LENGTH} colors!`, 'error');
-                return;
-            }
-            
-            const result = evaluateGuess(currentGuess);
-            guesses.push({ guess: [...currentGuess], result });
-            recordMove();
-            currentGuess = [];
-            
-            if (result.exact === CODE_LENGTH) {
-                gameWon = true;
-                const finalMsg = `🎨 CODE CRACKED! You broke the secret code! 🎨`;
-                setTimeout(() => showWinLose(true, finalMsg), 200);
-            } else {
-                showFeedback(`Exact: ${result.exact} | Partial: ${result.partial}`, 'info');
-            }
-            
-            renderGame();
-        }
-        
-        // Reset game
-        function resetGame() {
-            generateSecret();
-            guesses = [];
-            currentGuess = [];
-            gameWon = false;
-            gameState.moves = 0;
-            document.getElementById('hud-moves').innerHTML = GAMES[4].maxMoves;
-            renderGame();
-        }
-        
-        actionRow.innerHTML = '';
-        const resetBtn = document.createElement('button'); 
-        resetBtn.className = 'btn primary'; 
-        resetBtn.textContent = '🎲 New Secret Code'; 
-        resetBtn.onclick = resetGame;
-        actionRow.appendChild(resetBtn);
-        
-        generateSecret();
-        renderGame();
+            area.appendChild(container); updateDisplay(); }
+        function updateDisplay(){ const displayDiv=document.getElementById('current-guess-display'); if(displayDiv){ displayDiv.innerHTML='';
+            for(let i=0;i<CODE_LENGTH;i++){ const slot=document.createElement('div'); slot.style.width='55px'; slot.style.height='55px'; slot.style.borderRadius='20px'; slot.style.background=currentGuess[i]!==undefined?COLORS[currentGuess[i]]:'#F0E6D8'; slot.style.border='2px solid #EADDBF'; slot.style.display='flex'; slot.style.alignItems='center'; slot.style.justifyContent='center'; slot.style.fontSize='32px'; slot.textContent=currentGuess[i]!==undefined?COLORS[currentGuess[i]]:'?'; displayDiv.appendChild(slot); }
+            const submitBtn=document.createElement('button'); submitBtn.textContent='✓ SUBMIT'; submitBtn.className='btn primary'; submitBtn.onclick=submitGuess; const clearBtn=document.createElement('button'); clearBtn.textContent='✗ CLEAR'; clearBtn.className='btn'; clearBtn.onclick=()=>{ currentGuess=[]; updateDisplay(); }; displayDiv.appendChild(submitBtn); displayDiv.appendChild(clearBtn); } }
+        function submitGuess(){ if(gameWon) return; if(currentGuess.length!==CODE_LENGTH){ showFeedback(`Need exactly ${CODE_LENGTH} colors!`,'error'); return; }
+            const result=evaluateGuess(currentGuess); guesses.push({guess:[...currentGuess],result}); recordMove(); currentGuess=[];
+            if(result.exact===CODE_LENGTH){ gameWon=true; setTimeout(()=>showWinLose(true,"🎨 CODE CRACKED!"),200); } else showFeedback(`Exact: ${result.exact} | Partial: ${result.partial}`,'info');
+            renderGame(); }
+        function resetGame(){ generateSecret(); guesses=[]; currentGuess=[]; gameWon=false; gameState.moves=0; document.getElementById('hud-moves').innerHTML=GAMES[4].maxMoves; renderGame(); }
+        actionRow.innerHTML=''; const resetBtn=document.createElement('button'); resetBtn.className='btn primary'; resetBtn.textContent='🎲 New Secret Code'; resetBtn.onclick=resetGame; actionRow.appendChild(resetBtn);
+        addHintButton(()=>{ if(secretCode.length){ let hintMsg="💡 Hint: The secret code contains: "; let uniqueColors=[...new Set(secretCode)]; hintMsg+=uniqueColors.map(i=>COLORS[i]).join(', '); showFeedback(hintMsg,"info"); } else showFeedback("Start a new game to get hints","info"); });
+        generateSecret(); renderGame();
     }
-    
+
     const GAME_BUILDERS = [buildLightsOut, buildMemoryMatch, buildQuickMath, buildSlidePuzzle, buildColorCodeBreaker];
 
     function renderMenu() {
@@ -555,11 +435,9 @@
             const doneBadge = gameState.completed[idx] ? `  · ${gameState.scores[idx]}pts` : ''; 
             const card = document.createElement('div'); 
             card.className = `puzzle-card ${locked ? 'locked' : ''}`; 
-            card.setAttribute('data-idx', idx); 
-            const isFinal = (idx === 4);
-            const bossIcon = isFinal ? '👑' : '';
+            const bossIcon = (idx === 4) ? '👑' : '';
             card.innerHTML = `<div class="icon">${gameState.completed[idx] ? '✅' : locked ? '🔒' : g.icon}${bossIcon}</div>
-                              <div class="name">${g.name}${isFinal && !gameState.completed[idx] && !locked ? ' ★BOSS★' : ''}</div>
+                              <div class="name">${g.name}${(idx===4 && !gameState.completed[idx] && !locked) ? ' ★BOSS★' : ''}</div>
                               <div class="diff">${g.diff}${doneBadge}</div>`; 
             if (!locked) card.onclick = () => startGame(idx); 
             container.appendChild(card); 
